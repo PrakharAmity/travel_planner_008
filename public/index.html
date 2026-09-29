@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f6f4">
+  <title>Northstar — Plan a little farther</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <div class="app-frame">
+    <aside class="sidebar">
+      <a class="wordmark" href="./"><span class="northstar">✳</span> northstar<span class="wordmark-dot">.</span></a>
+      <div class="workspace-label">YOUR SPACE</div>
+      <nav aria-label="Main navigation">
+        <a class="nav-link active" href="#discover"><span>⌕</span> Discover</a>
+        <a class="nav-link" href="#saved"><span>▤</span> My itineraries <b id="saved-count">2</b></a>
+        <a class="nav-link" href="#reservations"><span>⌑</span> Reservations</a>
+      </nav>
+      <div class="sidebar-spacer"></div>
+      <section class="side-trip-card">
+        <div class="side-card-kicker">YOUR NEXT CHAPTER</div>
+        <div class="side-trip-art"><span>✦</span><i></i><b></b></div>
+        <strong>Make time for the coast.</strong>
+        <p>San Francisco is just a few clicks away.</p>
+        <button id="side-search" class="side-link">Explore flights <span>↗</span></button>
+      </section>
+      <div class="profile-row"><span class="profile-avatar">AM</span><span><strong>Alex Morgan</strong><small>Explorer · Member since 2022</small></span><button aria-label="Profile menu">···</button></div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar"><div class="crumb">Northstar <span>/</span> Discover</div><div class="topbar-right"><span class="member-tag"><span>✧</span> NORTHSTAR MEMBER</span><button class="help-button" aria-label="Help">?</button><span class="top-avatar">AM</span></div></header>
+      <section class="welcome" id="discover"><div class="welcome-copy"><div class="overline"><i></i> YOUR NEXT ADVENTURE STARTS HERE</div><h1>Make room for<br><em>somewhere new.</em></h1><p>Find a flight that fits your plans, then save the little details that make a trip yours.</p></div><div class="hero-stamp"><span>THE WORLD<br>IS WAITING</span><b>✳</b></div></section>
+
+      <section class="search-card" aria-label="Search flights">
+        <div class="search-heading"><div><span class="section-index">01</span><strong>Where to next?</strong></div><button class="round-more" aria-label="Search options">···</button></div>
+        <form id="search-form" class="search-form">
+          <label class="search-field"><span>FROM</span><div><b>⌖</b><input id="origin" value="NYC" aria-label="Origin airport"><small>New York · All airports</small></div></label>
+          <button type="button" id="swap-cities" class="swap-button" aria-label="Swap cities">⇄</button>
+          <label class="search-field"><span>TO</span><div><b>⌖</b><input id="destination" value="SFO" aria-label="Destination airport"><small>San Francisco · SFO</small></div></label>
+          <label class="search-field date-field"><span>DEPART</span><div><b>▦</b><input id="travel-date" type="date" value="2026-10-14" aria-label="Departure date"></div></label>
+          <label class="search-field traveler-field"><span>TRAVELERS</span><div><b>♙</b><select id="travelers" aria-label="Travelers"><option value="1">1 traveler</option><option value="2">2 travelers</option><option value="3">3 travelers</option><option value="4">4 travelers</option></select></div></label>
+          <button class="search-submit" type="submit"><span>Find flights</span><b>→</b></button>
+        </form>
+        <div class="search-bottom"><span>Popular from New York</span><button class="destination-chip" data-destination="BOS">Boston <i>↗</i></button><button class="destination-chip" data-destination="MIA">Miami <i>↗</i></button><button class="destination-chip" data-destination="LAX">Los Angeles <i>↗</i></button><span class="flex-spacer"></span><span class="last-search">✦ Prices include taxes & carrier fees</span></div>
+      </section>
+
+      <div class="dashboard-grid">
+        <section class="results-section">
+          <div class="section-heading"><div><span class="section-index">02</span><div><h2>Flights worth the early start</h2><p id="results-caption">Thoughtful options for your New York → San Francisco trip</p></div></div><button id="sort-price" class="sort-control">Best match <span>⌄</span></button></div>
+          <div class="flight-list" id="flight-list" aria-live="polite"><div class="loading-state">Finding the right way there…</div></div>
+          <button id="load-more" class="load-more">See all available departures <span>→</span></button>
+        </section>
+
+        <aside class="trip-sidebar">
+          <section class="insight-card route-card"><div class="card-topline"><span>ROUTE NOTE</span><span class="tiny-spark">✳</span></div><h3>A smoother way<br>to get there.</h3><p>Compare a quick connection with a lower-fare route to make the trip work for you.</p><div class="route-compare"><div><span class="route-type">FEWEST STOPS</span><strong id="fewest-route">SEA → SFO → NYC</strong><small>2 flights · about 7h 40m</small></div><div class="compare-rule"></div><div><span class="route-type">LOWEST FARE</span><strong id="cheap-route">SEA → DEN → DFW → NYC</strong><small id="cheap-price">3 flights · from $270</small></div></div><div class="route-footnote"><span>↗</span> Better connections, fewer tabs.</div></section>
+
+          <section class="insight-card calendar-card"><div class="card-topline"><span>YOUR FLEX WINDOW</span><button id="calendar-info" class="calendar-info" aria-label="About flexible times">i</button></div><h3>Good times to travel</h3><p>Open windows on your selected travel day</p><div id="window-list" class="window-list"></div><div class="calendar-footer"><span>Local departure times</span><span>Updated just now <i></i></span></div></section>
+
+          <section class="saved-card" id="saved"><div class="saved-heading"><div><span class="section-index">03</span><h3>Keep it on your radar</h3></div><a href="#saved-list">All saved <span>→</span></a></div><div id="saved-list" class="saved-list"></div></section>
+          <section class="saved-card reservation-card" id="reservations"><div class="saved-heading"><div><span class="section-index">04</span><h3>Your reservations</h3></div><span class="secure-label">SECURE</span></div><div id="reservation-list" class="reservation-list"></div></section>
+          <section class="saved-card reservation-card" id="reservations"><div class="saved-heading"><div><span class="section-index">04</span><h3>Your reservations</h3></div><span class="secure-label">SECURE</span></div><div id="reservation-list" class="reservation-list"></div></section>
+        </aside>
+      </div>
+      <footer class="site-footer"><span>© NORTHSTAR TRAVEL CO.</span><span>Good trips start with a little curiosity.</span><div><a href="#help">Help</a><a href="#terms">Terms</a><a href="#privacy">Privacy</a></div></footer>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="booking-modal" hidden>
+    <section class="booking-modal" role="dialog" aria-modal="true" aria-labelledby="booking-title">
+      <header class="modal-header"><div><span class="overline">ONE LAST LITTLE DETAIL</span><h2 id="booking-title">Make this trip yours.</h2></div><button id="close-modal" class="close-button" aria-label="Close dialog">×</button></header>
+      <div class="selected-flight" id="selected-flight"></div>
+      <label class="modal-label" for="traveler-name">Lead traveler</label><input id="traveler-name" class="modal-input" value="Alex Morgan" placeholder="Full name as it appears on ID">
+      <div class="booking-summary"><span id="traveler-summary">1 traveler</span><strong id="booking-total">$0</strong></div>
+      <button id="confirm-booking" class="confirm-button">Confirm reservation <span>→</span></button><p class="fine-print">You can review and manage your reservation from your Northstar space.</p><div id="booking-message" class="booking-message" role="status"></div>
+    </section>
+  </div>
+  <div id="toast" class="toast" role="status"></div>
+</body>
+</html>
