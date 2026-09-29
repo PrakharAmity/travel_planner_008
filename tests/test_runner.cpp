@@ -34,33 +34,33 @@ static void expect(bool condition, const std::string& message) {
 
 int main() {
     const std::vector<TestCase> tests = {
-        {"test_search_returns_all_matching_departures", [] {
+        {"Bug 1: Departure Search Catalog Filter", [] {
             const auto found = searchTrips("NYC", "SFO", 45000);
             expect(found.size() == 3, "Expected 3 New York to San Francisco departures under $450, got " + std::to_string(found.size()));
         }},
-        {"test_connections_minimize_layovers", [] {
+        {"Bug 2: Connection Planner Layover Minimization", [] {
             const auto route = fewestLayoverRoute("SEA", "NYC", routeCatalog());
             const std::vector<std::string> expected = {"SEA", "SFO", "NYC"};
             expect(route == expected, "Expected fewest-layover route SEA → SFO → NYC");
         }},
-        {"test_calendar_merges_nested_booking_windows", [] {
+        {"Bug 3: Flexible Windows Nested Booking Merge", [] {
             const auto free = availableWindows(0, 60, {{10, 40}, {15, 20}});
             expect(free.size() == 2 && free[0].start_minute == 0 && free[0].end_minute == 10 &&
                    free[1].start_minute == 40 && free[1].end_minute == 60,
                    "Expected open windows 00:00–00:10 and 00:40–01:00 after overlapping bookings");
         }},
-        {"test_fare_finder_selects_lowest_total_price", [] {
+        {"Bug 4: Fare Finder Lowest Total Price", [] {
             const auto route = cheapestRoute("SEA", "NYC", routeCatalog());
             const std::vector<std::string> expected = {"SEA", "DEN", "DFW", "NYC"};
             expect(route.airports == expected && route.total_price_cents == 27000,
                    "Expected lowest fare $270 via SEA → DEN → DFW → NYC, got $" + std::to_string(route.total_price_cents / 100));
         }},
-        {"test_reservation_total_scales_with_travelers", [] {
+        {"Bug 5: Group Pricing Reservation Total Scaling", [] {
             const auto& trip = tripCatalog()[1];
             const int total = reservationTotalCents(trip, 3);
             expect(total == 116700, "Expected 3 traveler total $1167, got $" + std::to_string(total / 100));
         }},
-        {"test_booking_rejects_requests_over_seat_inventory", [] {
+        {"Bug 6: Seat Inventory Limit Boundary Check", [] {
             TripOption trip = tripCatalog()[0];
             trip.seats_available = 2;
             const bool booked = reserveSeats(trip, 3);
@@ -82,19 +82,21 @@ int main() {
     int passed = 0;
     int failed = 0;
     long long total_ms = 0;
-    std::cout << "{";
+    std::cout << "{\n";
     for (std::size_t i = 0; i < results.size(); ++i) {
         const auto& result = results[i];
         passed += result.passed ? 1 : 0;
         failed += result.passed ? 0 : 1;
         total_ms += result.elapsed_ms;
-        if (i) std::cout << ",";
-        std::cout << quoteJson(result.name) << ":{\"Status\":" << quoteJson(result.passed ? "passed" : "failed")
-                  << ",\"Execution time\":" << quoteJson(std::to_string(result.elapsed_ms) + "ms");
-        if (!result.passed) std::cout << ",\"Error\":" << quoteJson(result.error);
-        std::cout << "}";
+        if (i) std::cout << ",\n";
+        std::cout << "  " << quoteJson(result.name) << ": {\n"
+                  << "    \"Status\": " << quoteJson(result.passed ? "passed" : "failed") << ",\n"
+                  << "    \"Execution time\": " << quoteJson(std::to_string(result.elapsed_ms) + "ms") << "\n"
+                  << "  }";
     }
-    std::cout << ",\"Passed\":" << passed << ",\"Failed\":" << failed << ",\"Total bugs\":" << tests.size()
-              << ",\"Total Execution time\":" << quoteJson(std::to_string(total_ms) + "ms") << "}\n";
+    std::cout << ",\n  \"Total bugs\": " << tests.size() << ",\n"
+              << "  \"Passed\": " << passed << ",\n"
+              << "  \"Failed\": " << failed << ",\n"
+              << "  \"Total Execution time\": " << quoteJson(std::to_string(total_ms) + "ms") << "\n}\n";
     return failed == 0 ? 0 : 1;
 }
