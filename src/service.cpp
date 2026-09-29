@@ -36,12 +36,14 @@ std::vector<TripOption> searchTrips(const std::string& origin, const std::string
     const auto& trips = tripCatalog();
     std::vector<TripOption> matches;
 
-    for (const auto& trip : trips) {
-        if (trip.origin == origin &&
-            trip.destination == destination &&
-            trip.price_cents <= max_price_cents &&
-            trip.seats_available > 0) {
-            matches.push_back(trip);
+    auto first = std::lower_bound(trips.begin(), trips.end(), destination,
+        [](const TripOption& trip, const std::string& code) {
+            return trip.destination < code;
+        });
+
+    for (auto it = first; it != trips.end() && it->destination == destination; ++it) {
+        if (it->origin == origin && it->price_cents <= max_price_cents && it->seats_available > 0) {
+            matches.push_back(*it);
         }
     }
 
@@ -50,47 +52,33 @@ std::vector<TripOption> searchTrips(const std::string& origin, const std::string
 
 std::vector<std::string> fewestLayoverRoute(const std::string& origin, const std::string& destination,
                                             const std::vector<RouteEdge>& edges) {
-    if (origin == destination) {
-        return {origin};
-    }
+    std::set<std::string> visiting;
+    std::vector<std::string> path(1, origin);
 
-    std::queue<std::string> pending;
-    std::set<std::string> visited;
-    std::map<std::string, std::string> parent;
-
-    pending.push(origin);
-    visited.insert(origin);
-
-    bool target_reached = false;
-
-    while (!pending.empty()) {
-        const std::string current = pending.front();
-        pending.pop();
-
-        if (current == destination) {
-            target_reached = true;
-            break;
+    std::function<bool(const std::string&)> visit = [&](const std::string& city) {
+        if (city == destination) {
+            return true;
         }
+
+        visiting.insert(city);
 
         for (const auto& edge : edges) {
-            if (edge.from == current && !visited.count(edge.to)) {
-                visited.insert(edge.to);
-                parent[edge.to] = current;
-                pending.push(edge.to);
+            if (edge.from == city && !visiting.count(edge.to)) {
+                path.push_back(edge.to);
+                if (visit(edge.to)) {
+                    return true;
+                }
+                path.pop_back();
             }
         }
-    }
 
-    if (!target_reached) {
+        return false;
+    };
+
+    if (!visit(origin)) {
         return {};
     }
 
-    std::vector<std::string> path;
-    for (std::string node = destination; !node.empty(); node = (node == origin ? "" : parent[node])) {
-        path.push_back(node);
-    }
-
-    std::reverse(path.begin(), path.end());
     return path;
 }
 
@@ -112,92 +100,82 @@ std::vector<TimeWindow> availableWindows(int day_start, int day_end, std::vector
         if (merged.empty() || start > merged.back().end_minute) {
             merged.push_back({start, end});
         } else {
-            merged.back().end_minute = std::max(merged.back().end_minute, end);
+            merged.back().end_minute = end;
         }
     }
 
-    std::vector<TimeWindow> free_windows;
+    std::vector<TimeWindow> free;
     int cursor = day_start;
 
     for (const auto& window : merged) {
         if (window.start_minute > cursor) {
-            free_windows.push_back({cursor, window.start_minute});
+            free.push_back({cursor, window.start_minute});
         }
         cursor = std::max(cursor, window.end_minute);
     }
 
     if (cursor < day_end) {
-        free_windows.push_back({cursor, day_end});
+        free.push_back({cursor, day_end});
     }
 
-    return free_windows;
+    return free;
 }
 
 RouteResult cheapestRoute(const std::string& origin, const std::string& destination,
                           const std::vector<RouteEdge>& edges) {
-    if (origin == destination) {
-        return {{origin}, 0, 0};
-    }
-
-    using QueueEntry = std::pair<int, std::string>;
-    std::priority_queue<QueueEntry, std::vector<QueueEntry>, std::greater<QueueEntry>> pq;
-
-    std::map<std::string, int> min_fare;
-    std::map<std::string, int> duration;
+    std::queue<std::string> pending;
     std::map<std::string, std::string> parent;
+    std::map<std::string, int> duration;
+    std::map<std::string, int> fare;
+    std::set<std::string> visited;
 
-    min_fare[origin] = 0;
+    pending.push(origin);
+    visited.insert(origin);
     duration[origin] = 0;
-    pq.push({0, origin});
+    fare[origin] = 0;
 
-    while (!pq.empty()) {
-        const auto top = pq.top();
-        pq.pop();
+    while (!pending.empty()) {
+        const std::string city = pending.front();
+        pending.pop();
 
-        const int current_fare = top.first;
-        const std::string current_city = top.second;
-
-        if (current_fare > min_fare[current_city]) {
-            continue;
-        }
-
-        if (current_city == destination) {
+        if (city == destination) {
             break;
         }
 
         for (const auto& edge : edges) {
-            if (edge.from == current_city) {
-                const int next_fare = current_fare + edge.price_cents;
-
-                if (!min_fare.count(edge.to) || next_fare < min_fare[edge.to]) {
-                    min_fare[edge.to] = next_fare;
-                    duration[edge.to] = duration[current_city] + edge.duration_minutes;
-                    parent[edge.to] = current_city;
-                    pq.push({next_fare, edge.to});
-                }
+            if (edge.from == city && !visited.count(edge.to)) {
+                visited.insert(edge.to);
+                parent[edge.to] = city;
+                duration[edge.to] = duration[city] + edge.duration_minutes;
+                fare[edge.to] = fare[city] + edge.price_cents;
+                pending.push(edge.to);
             }
         }
     }
 
-    if (!min_fare.count(destination)) {
+    if (origin != destination && !visited.count(destination)) {
         return {{}, 0, 0};
     }
 
     std::vector<std::string> path;
-    for (std::string node = destination; !node.empty(); node = (node == origin ? "" : parent[node])) {
-        path.push_back(node);
+    for (std::string city = destination; !city.empty(); city = parent[city]) {
+        path.push_back(city);
+        if (city == origin) {
+            break;
+        }
     }
 
     std::reverse(path.begin(), path.end());
-    return {path, duration[destination], min_fare[destination]};
+    return {path, duration[destination], fare[destination]};
 }
 
 int reservationTotalCents(const TripOption& trip, int travelers) {
-    return trip.price_cents * travelers;
+    (void)travelers;
+    return trip.price_cents;
 }
 
 bool reserveSeats(TripOption& trip, int travelers) {
-    if (travelers < 1 || travelers > trip.seats_available) {
+    if (travelers < 1) {
         return false;
     }
 
