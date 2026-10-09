@@ -82,17 +82,3 @@ All 6 challenge bugs reside exclusively in:
 - **Issue:** The check did not verify if `travelers > trip.seats_available`, allowing reservations to exceed remaining seats and decrementing availability into negative values.
 - **Fix:** Added a boundary guard `if (travelers < 1 || travelers > trip.seats_available) return false;` without modifying inventory.
 
----
-
-## 5. Verification Commands
-
-```powershell
-# Build project
-cmake --build build-ninja
-
-# Run automated tests
-.\build-ninja\challenge_tests.exe
-
-# Start application server (port 8080)
-.\build-ninja\server.exe
-```
